@@ -35,9 +35,15 @@ def ping_url(url):
         end_time = time.time()
         
         time_diff = end_time - start_time
-        
-        return f'Ping to {url} successful. Time: {time_diff} seconds', time_diff
     
+        icmp_header = reply[20:28]
+        icmp_type, icmp_code, _, _, _ = struct.unpack('!BBHHH', icmp_header)
+                
+        if icmp_type == 0 and icmp_code == 0:
+            return f'Ping to {url} successful. Time: {time_diff} seconds', time_diff
+        else:
+            return f'Ping to {url} failed. ICMP error code: {icmp_type}:{icmp_code}', float('inf')
+
     except socket.error as e:
         return f'Ping to {url} failed. Error: {e}', float('inf')
 
@@ -63,7 +69,7 @@ def main():
         total_tries += 1
 
         print(result)
-        print(f"min rtt: {min_rtt}, max_rtt: {max_rtt}, avg_rtt: {total_rtt / (total_tries - lost)}, lost: {lost / total_tries}")
+        print(f"min rtt: {min_rtt}, max_rtt: {max_rtt}, avg_rtt: {0 if total_tries == lost else total_rtt / (total_tries - lost)}, lost: {lost / total_tries}")
         
         count -= 1
 
